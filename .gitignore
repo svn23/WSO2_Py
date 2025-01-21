@@ -1,0 +1,17 @@
+# Ignore environment variables
+.env
+.vscode
+
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore virtual environments
+svn/
+env/
+
+# Ignore SSL certificates
+server.key
+server.crt
+server.csr

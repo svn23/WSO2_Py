@@ -1,194 +1,57 @@
-from flask import Flask, request, jsonify
-import mysql.connector
-import bcrypt
-from flask_cors import CORS  # Importing CORS for cross-origin resource sharing
+#!/usr/bin/env python
+
+from flask import Flask
+from flask_cors import CORS
+from routes.routes import routes_bp
+from routes.OIDC.wso2 import wso2_bp
+import os
+import secrets
+from dotenv import load_dotenv
 
 app = Flask(__name__)
-CORS(app)  # Enabling CORS for all routes (allows frontend to access backend)
 
-# Connect to MySQL
-def connect_to_database():
-    return mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='admin',
-        database='crud'
-    )
+# Load existing environment variables from the .env file
+load_dotenv()
 
-# Create the users table if it doesn't exist
-def create_users_table():
-    connection = connect_to_database()
-    cursor = connection.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100),
-        email VARCHAR(100),
-        age INT,
-        password VARCHAR(255)
-    )
-    """)
-    connection.commit()
-    cursor.close()
-    connection.close()
+# Generate a new secret key
+new_secret_key = secrets.token_hex(32)
 
-# Hash password function
-# def hash_password(password):
-#     salt = bcrypt.gensalt()
-#     return bcrypt.hashpw(password.encode('utf-8'), salt)
+# Replace or add the secret key in the .env file
+env_file_path = '.env'
+if os.path.exists(env_file_path):
+    with open(env_file_path, 'r') as env_file:
+        lines = env_file.readlines()
 
-# Route to create a new user
-@app.route('/users', methods=['POST'])
-def create_user():
-    data = request.json  # Get JSON data from the frontend
-    name = data.get('name')
-    email = data.get('email')
-    age = data.get('age')
-    password = data.get('password')
+    # Replace FLASK_SECRET_KEY if it exists
+    with open(env_file_path, 'w') as env_file:
+        key_replaced = False
+        for line in lines:
+            if line.startswith('FLASK_SECRET_KEY='):
+                env_file.write(f"FLASK_SECRET_KEY={new_secret_key}\n")
+                key_replaced = True
+            else:
+                env_file.write(line)
+        
+        # If FLASK_SECRET_KEY was not found, add it
+        if not key_replaced:
+            env_file.write(f"FLASK_SECRET_KEY={new_secret_key}\n")
+else:
+    # Create the .env file and add the secret key
+    with open(env_file_path, 'w') as env_file:
+        env_file.write(f"FLASK_SECRET_KEY={new_secret_key}\n")
 
-    if not all([name, email, age, password]):
-        return jsonify({"error": "All fields are required"}), 400
+# Set the secret key for the Flask app
+app.secret_key = new_secret_key
 
-    # Ensure 'age' is an integer
-    try:
-        age = int(age)
-    except ValueError:
-        return jsonify({"error": "Age must be a number"}), 400
+app.config['SESSION_COOKIE_SECURE'] = False  # Use False when running on HTTP (localhost)
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Make cookies accessible only through HTTP
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Helps with cross-site request handling
+CORS(app)
 
-    # hashed_password = hash_password(password)  # Hash the password before storing
-
-    connection = connect_to_database()
-    cursor = connection.cursor()
-    try:
-        cursor.execute(
-            "INSERT INTO users (name, email, age, password) VALUES (%s, %s, %s, %s)",
-            (name, email, age, password)
-            # (name, email, age, hashed_password)
-        )
-        connection.commit()
-        user_id = cursor.lastrowid
-        return jsonify({"message": "User created", "user_id": user_id}), 201
-    except mysql.connector.Error as err:
-        return jsonify({"error": str(err)}), 500
-    finally:
-        cursor.close()
-        connection.close()
-
-# Route to get all users
-@app.route('/users', methods=['GET'])
-def get_users():
-    connection = connect_to_database()
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT id, name, email, age FROM users")
-    users = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return jsonify(users)
-
-# Route to get a user by ID
-@app.route('/users/<int:user_id>', methods=['GET'])
-def get_user(user_id):
-    connection = connect_to_database()
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT id, name, email, age FROM users WHERE id = %s", (user_id,))
-    user = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    if user:
-        return jsonify(user)
-    else:
-        return jsonify({"error": "User not found"}), 404
-
-# Route to get a user by email
-# Route to get a user by email
-@app.route('/users/<email>', methods=['GET'])
-def get_user_by_email(email):
-    try:
-        # Connect to the database
-        connection = connect_to_database()
-        cursor = connection.cursor(dictionary=True)
-
-        # SQL query to fetch user by email
-        query = "SELECT * FROM users WHERE email = %s"
-        cursor.execute(query, (email,))  # Pass email as parameter to avoid SQL injection
-
-        user = cursor.fetchone()  # Fetch a single record
-
-        if user:
-            # User found, return user details
-            return jsonify({
-                "email": user['email'],
-                "password": user['password']  # Return the hashed password (not plain-text)
-            }), 200
-        else:
-            # User not found
-            return jsonify({"error": "User not found"}), 404
-
-    except mysql.connector.Error as err:
-        # Handle database connection or query errors
-        return jsonify({"error": f"Database error: {err}"}), 500
-
-    finally:
-        # Ensure all results are handled before closing
-        if cursor:
-            cursor.fetchall()  # Fetch all remaining results to clear any unread results
-            cursor.close()
-        if connection:
-            connection.close()
-
-# Route to update a user by ID
-@app.route('/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
-    data = request.json
-    name = data.get('name')
-    email = data.get('email')
-    age = data.get('age')
-    password = data.get('password')
-
-    if not any([name, email, age, password]):
-        return jsonify({"error": "At least one field is required to update"}), 400
-
-    connection = connect_to_database()
-    cursor = connection.cursor()
-    update_fields = []
-    update_values = []
-
-    if name:
-        update_fields.append("name = %s")
-        update_values.append(name)
-    if email:
-        update_fields.append("email = %s")
-        update_values.append(email)
-    if age:
-        update_fields.append("age = %s")
-        update_values.append(age)
-    if password:
-        # hashed_password = hash_password(password)
-        update_fields.append("password = %s")
-        update_values.append(password)
-                # update_values.append(hashed_password)
-
-    update_values.append(user_id)
-    update_query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
-    
-    cursor.execute(update_query, tuple(update_values))
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    return jsonify({"message": "User updated successfully"})
-
-# Route to delete a user by ID
-@app.route('/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    connection = connect_to_database()
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return jsonify({"message": "User deleted successfully"})
+# Register the blueprints
+app.register_blueprint(routes_bp)
+app.register_blueprint(wso2_bp, url_prefix='/OIDC/wso2')
 
 if __name__ == '__main__':
-    create_users_table()  # Ensure the table is created when the server starts
-    app.run(debug=True, port=5000)
+    with app.app_context():
+        app.run(debug=True, port=2312, ssl_context=('server.crt', 'server.key'))
