@@ -54,4 +54,4 @@ app.register_blueprint(wso2_bp, url_prefix='/OIDC/wso2')
 
 if __name__ == '__main__':
     with app.app_context():
-        app.run(debug=True, port=2312, ssl_context=('server.crt', 'server.key'))
+        app.run(debug=True, port=2312)
