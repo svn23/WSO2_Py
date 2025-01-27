@@ -54,4 +54,6 @@ app.register_blueprint(wso2_bp, url_prefix='/OIDC/wso2')
 
 if __name__ == '__main__':
     with app.app_context():
-        app.run(debug=True, port=2312, ssl_context=('server.crt', 'server.key'))
+        port = int(os.environ.get('PORT', 2312))  # Default to port 2312 if PORT is not set
+        app.run(host='0.0.0.0', port=port)
+
