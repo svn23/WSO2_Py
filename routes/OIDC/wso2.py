@@ -32,6 +32,7 @@ def login():
         f"&redirect_uri={REDIRECT_URI}"
         f"&scope={SCOPES}"
     )
+    print(f"Authorization URL: {auth_url}")
     return redirect(auth_url)
 
 
@@ -158,13 +159,13 @@ def logout():
         logout_url = (
             f"{LOGOUT_URI}?"
             f"id_token_hint={id_token}&"
-            f"post_logout_redirect_uri={url_for('wso2.login', _external=True)}&"
+            f"post_logout_redirect_uri={url_for('routes.index', _external=True)}&"
             f"client_id={CLIENT_ID}"
         )
         return redirect(logout_url)
 
     flash('You have been logged out successfully.')
-    return redirect(url_for('wso2.login'))
+    return redirect(url_for('routes.index'))
 
 # Register the blueprint
 app.register_blueprint(wso2_bp, url_prefix='/OIDC/wso2')
