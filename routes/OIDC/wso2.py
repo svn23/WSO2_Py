@@ -1,7 +1,10 @@
 import os
 from flask import Flask, Blueprint, redirect, url_for, session, request, jsonify, render_template, flash
+from jinja2 import Undefined
 from dotenv import load_dotenv
 import requests
+from jinja2 import Undefined
+import json
 
 load_dotenv()
 
@@ -31,6 +34,68 @@ def login():
     )
     return redirect(auth_url)
 
+
+@wso2_bp.route('/dashboard')
+def dashboard():
+    # Fetch user info from session
+    user_info = session.get('user_info')
+    if not user_info:
+        flash('User is not logged in.')
+        return redirect(url_for('wso2.login'))
+
+    # Ensure that all keys are present and no Undefined or None values exist
+    def safe_value(value):
+        # Check if the value is Undefined or None and return a safe value (empty string or None)
+        if isinstance(value, Undefined):
+            return ''
+        return value if value is not None else ''
+
+    # Apply safe_value to all user_info items
+    user_info = {key: safe_value(value) for key, value in user_info.items()}
+
+    # Pass the sanitized user_info to the template
+    return render_template('dashboard.html', **user_info)
+
+@wso2_bp.route('/user_home')
+def user_home():
+    # Fetch user info from session
+    user_info = session.get('user_info')
+    if not user_info:
+        flash('User is not logged in.')
+        return redirect(url_for('wso2.login'))
+
+    # Ensure that all keys are present and no Undefined or None values exist
+    def safe_value(value):
+        if isinstance(value, Undefined):
+            return ''
+        return value if value is not None else ''
+
+    # Apply safe_value to all user_info items
+    user_info = {key: safe_value(value) for key, value in user_info.items()}
+
+    # Pass the sanitized user_info to the template
+    return render_template('user_dash.html', **user_info)
+
+@wso2_bp.route('/user_profile')
+def user_profile():
+    # Fetch user info from session again if necessary
+    user_info = session.get('user_info')
+    if not user_info:
+        flash('User is not logged in.')
+        return redirect(url_for('wso2.login'))
+
+    # Ensure all values are safe to pass into template
+    def safe_value(value):
+        if isinstance(value, Undefined):
+            return ''
+        return value if value is not None else ''
+
+    # Apply safe_value to all user_info items
+    user_info = {key: safe_value(value) for key, value in user_info.items()}
+
+    # Render user profile page with sanitized data
+    return render_template('user_profile.html', **user_info)
+
 # Handle the callback from WSO2
 @wso2_bp.route('/authorized')
 def authorized():
@@ -55,8 +120,6 @@ def authorized():
         session['access_token'] = access_token
         session['id_token'] = token_data.get('id_token')
 
-
-
         # Fetch user information
         user_info_response = requests.get(
             USERINFO_URI,
@@ -67,15 +130,21 @@ def authorized():
         if user_info_response.status_code == 200:
             user_info = user_info_response.json()
 
-            # Pass this info to the template
-            # return render_template('dashboard.html', userInfo=user_info, phone_number=phone_number, roles=roles)
-            return render_template('dashboard.html', **user_info, user_info=user_info)
+
+            # Store the user info in session
+            session['user_info'] = user_info
+
+
+            # Redirect to the user_home page
+            return redirect(url_for('wso2.user_home'))
+
         else:
             flash('Failed to fetch user details.')
     else:
         flash('Failed to obtain access token.')
 
     return redirect(url_for('wso2.login'))
+
 
 
 @wso2_bp.route('/logout')
