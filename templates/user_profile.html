@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - SecureSphere</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://i.imgur.com/KKsIROm.png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=account_circle" /> 
+    
+    <style>
+        :root {
+            --primary-color: #375E97;
+            --secondary-color: #FB6542;
+            --accent-color: #FFBB00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        .header {
+            background-color: var(--primary-color);
+            padding: 1rem;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .menu-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .user-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background: none;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            border-radius: 4px;
+        }
+
+        .dropbtn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes buttonClick {
+            0%, 100% {
+                box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        .dropbtn.clicked {
+            animation: buttonClick 1s ease-out;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #1f2937;
+            min-width: 250px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            z-index: 1;
+            border-radius: 6px;           
+            padding: 10px;
+            text-align: center;
+
+        }
+
+        .user-info {
+            padding: 1rem;
+            color: white;
+        }
+
+        .tag {
+            background-color: var(--secondary-color);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            display: inline-block;
+            margin-left: 4px;
+        }
+
+        .dropdown-divider {
+            border-top: 1px solid #374151;
+            margin: 0.5rem 0;
+        }
+
+        .dropdown-btn {
+            display: block;
+            width: calc(100% - 2rem);
+            margin: 0.5rem 1rem;
+            padding: 0.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: background-color 0.3s;
+        }
+
+        .dropdown-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .dropdown-btn i {
+            margin-right: 0.5rem;
+            width: 20px;
+        }
+
+        .user-dropdown:hover .dropdown-content {
+            display: block;
+        }
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        /*  */
+
+        .nav-link {
+            color: white !important;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-color) !important;
+            transform: translateY(-2px);
+        }
+
+        .breadcrumb-section {
+            background: linear-gradient(to right, #f8f9fa, #ffffff);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding: 1rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            animation: slideInUp 0.5s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .profile-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            border-radius: 30px;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1));
+        }
+
+        .profile-title {
+            color: var(--secondary-color);
+            font-weight: 600;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .profile-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .profile-title:hover::after {
+            width: 100px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group:hover {
+            background-color: rgba(55, 94, 151, 0.05);
+            transform: translateX(10px);
+        }
+
+        .form-label {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label.required::after {
+            content: '*';
+            color: var(--secondary-color);
+            margin-left: 4px;
+        }
+
+        .form-value {
+            color: #333;
+            padding: 0.5rem;
+            border-radius: 5px;
+            background-color: rgba(255,255,255,0.8);
+        }
+
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            margin-top: auto;
+        }
+
+        .footer-links a {
+            color: var(--accent-color) !important;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: white !important;
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-hover {
+            transition: all 0.3s ease;
+        }
+
+        .animate-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        @media (max-width: 768px) {
+            .profile-card {
+                margin: 1rem;
+            }
+
+            .form-group {
+                padding: 0.75rem;
+            }
+
+            .form-label {
+                font-size: 0.9rem;
+            }
+
+            .form-value {
+                font-size: 0.9rem;
+            }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .profile-title {
+                font-size: 1.5rem;
+            }
+
+            .dropdown-content {
+                min-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Navbar -->
+    <header class="header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <button class="menu-btn">
+                <i style="
+                font-size: 1.5rem;
+            " class="fas fa-bars fa-lg"></i>
+            </button>
+            <div class="user-dropdown">
+                <button class="dropbtn" id="userDropdown"><span style="
+                    font-size: 2rem;
+                " class="material-symbols-outlined">
+                    account_circle
+                    </span></button>
+                <div class="dropdown-content">
+                    <div class="user-info">
+                        <div>User: <span class="tag">{{ given_name }} {{ family_name }}</span></div>
+                        <div style="margin-top: 0.5rem">Organization: <span class="tag">Centroxy</span></div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="{{ url_for('wso2.user_profile') }}" class="dropdown-btn">
+                        <i class="fas fa-user"></i> Profile
+                    </a>
+                    <a href="{{ url_for('wso2.logout') }}" class="dropdown-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="{{ url_for('wso2.user_home') }}" class=text-decoration-none text-primary">Home</a></li>
+                            <li class="breadcrumb-item active">Profile</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-md-6 text-end">
+                    <i class="fas fa-home text-primary"></i>
+                    <i class="fas fa-chevron-right mx-2 text-muted"></i>
+                    <span>Profile</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mb-5">
+        <div class="profile-card">
+            <!-- <div class="profile-header">
+                <h3 class="mb-0">
+                    <i class="fas fa-user-circle me-2"></i>
+                    User Profile
+                </h3>
+            </div> -->
+            <div class="card-body p-4">
+                <h2 class="profile-title">My Profile</h2>
+                
+                <div class="form-group">
+                    <label class="form-label required">Display Name</label>
+                    <div class="form-value">
+                        <i class="fas fa-user me-2 text-secondary"></i>
+                        {{ given_name }} {{ family_name }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Email</label>
+                    <div class="form-value">
+                        <i class="fas fa-envelope me-2 text-secondary"></i>
+                        {{ email }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">First Name</label>
+                    <div class="form-value">{{ given_name }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Last Name</label>
+                    <div class="form-value">{{ family_name }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Role Assigned</label>
+                    <div class="form-value">
+                        <span style="
+                        padding: 12px 12px 12px 12px;
+                        border-radius: 12px;
+                    "    class="badge bg-primary me-2">{{ roles if roles else "No roles Assigned" }}</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">Contact</label>
+                    <div class="form-value">{{ phone_number if phone_number else "No Contacts Found" }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">U Id</label>
+                    <div class="form-value">{{ sub }}</div>
+                </div>
+                
+
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto">
+        <div class="container">
+            <p class="text-center mb-3">© 2025 Centroxy. All Rights Reserved.</p>
+            <div class="footer-links text-center">
+                <a href="#" class="text-decoration-none mx-2">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Privacy Policy
+                </a>
+                <span class="text-muted">|</span>
+                <a href="#" class="text-decoration-none mx-2">
+                    <i class="fas fa-gavel me-1"></i>
+                    Terms of Service
+                </a>
+                <span class="text-muted">|</span>
+                <a href="#" class="text-decoration-none mx-2">
+                    <i class="fas fa-envelope me-1"></i>
+                    Contact Us
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+</body>
+</html>

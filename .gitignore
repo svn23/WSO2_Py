@@ -1,0 +1,30 @@
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Certificates
+*.crt
+*.key
+*.pem
+*.p12
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
