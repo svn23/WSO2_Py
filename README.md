@@ -31,7 +31,7 @@ This project is a Flask-based application integrating OpenID Connect (OIDC) auth
 1. **Clone the Repository**
    ```bash
    git clone https://github.com/svn23/WSO2_Py.git
-   cd WSO@_py
+   cd WSO2_py
    ```
 
 2. **Set Up a Virtual Environment** *(recommended)*
