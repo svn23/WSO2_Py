@@ -1,0 +1,13 @@
+{
+  "enabled": [
+    "pkce",
+    "token_introspection",
+    "refresh_token",
+    "rbac",
+    "audit_log",
+    "token_inspector",
+    "oidc_flow",
+    "token_timer",
+    "debug_trace"
+  ]
+}

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Trace | SecureSphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--card2:#1f2940;--txt:#f1f5f9;--txt2:#94a3b8;--muted:#64748b;--cyan:#22d3ee;--cyan2:#06b6d4;--glow:rgba(34,211,238,.25);--border:rgba(148,163,184,.1);--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column;}
+        .bg-anim{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+        .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.3;animation:float 20s ease-in-out infinite;}
+        .o1{width:500px;height:500px;background:radial-gradient(circle,var(--red),transparent 70%);top:-200px;right:-100px;opacity:.2;}
+        .o2{width:400px;height:400px;background:radial-gradient(circle,var(--cyan),transparent 70%);bottom:-150px;left:-100px;animation-delay:-10s;}
+        @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,20px)}}
+        header{background:rgba(17,24,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:.9rem 2rem;position:sticky;top:0;z-index:100;}
+        .hdr{max-width:1300px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
+        .logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:var(--txt);}
+        .logo-i{width:38px;height:38px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 0 18px var(--glow);}
+        .logo-t{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--txt),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        nav{display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;}
+        nav a{color:var(--txt2);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s;}
+        nav a:hover,nav a.active{color:var(--cyan);}
+        main{flex:1;padding:2rem;position:relative;z-index:1;}
+        .container{max-width:1100px;margin:0 auto;}
+        h1{font-size:1.6rem;font-weight:700;margin-bottom:.4rem;background:linear-gradient(135deg,var(--txt),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .subtitle{color:var(--txt2);font-size:.9rem;margin-bottom:2rem;}
+        .warn-banner{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);border-radius:12px;padding:.9rem 1.25rem;margin-bottom:1.5rem;font-size:.85rem;}
+        .tab-bar{display:flex;background:var(--card);border:1px solid var(--border);border-radius:16px 16px 0 0;overflow:hidden;}
+        .tab{flex:1;padding:1rem;text-align:center;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--txt2);transition:all .2s;border:none;background:transparent;border-bottom:2px solid transparent;}
+        .tab:hover{color:var(--txt);}
+        .tab.active{color:var(--cyan);border-bottom-color:var(--cyan);background:rgba(34,211,238,.05);}
+        .tab-content{background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;margin-bottom:1.5rem;}
+        .panel{display:none;padding:1.5rem;}
+        .panel.active{display:block;}
+        pre{font-family:'Fira Code',monospace,monospace;font-size:.8rem;color:var(--txt2);white-space:pre-wrap;word-break:break-all;line-height:1.7;background:var(--bg2);padding:1.25rem;border-radius:12px;border:1px solid var(--border);position:relative;}
+        .copy-btn{position:absolute;top:.75rem;right:.75rem;background:var(--card);border:1px solid var(--border);color:var(--txt2);padding:.3rem .75rem;border-radius:8px;cursor:pointer;font-size:.75rem;transition:all .2s;}
+        .copy-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+        .kv-table{width:100%;}
+        .kv-table tr{border-bottom:1px solid var(--border);}
+        .kv-table tr:last-child{border-bottom:none;}
+        .kv-table td{padding:.75rem 0;font-size:.875rem;}
+        .kv-table td:first-child{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;width:35%;padding-right:1rem;}
+        .kv-table td:last-child{color:var(--txt);font-family:monospace;word-break:break-all;}
+        .section-title{font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+        .section-title i{color:var(--cyan);}
+    </style>
+</head>
+<body>
+<div class="bg-anim"><div class="orb o1"></div><div class="orb o2"></div></div>
+<header>
+  <div class="hdr">
+    <a href="{{ url_for('routes.user_home') }}" class="logo">
+      <div class="logo-i"><i class="fas fa-shield-halved"></i></div>
+      <span class="logo-t">SecureSphere</span>
+    </a>
+    <nav>
+      <a href="{{ url_for('routes.user_home') }}"><i class="fas fa-home"></i> Home</a>
+      <a href="{{ url_for('routes.user_profile') }}"><i class="fas fa-user"></i> Profile</a>
+      <a href="{{ url_for('debug_trace.debug_trace') }}" class="active"><i class="fas fa-bug"></i> Debug Trace</a>
+      {% if features.get('token_inspector') %}<a href="{{ url_for('token_inspector.inspect') }}"><i class="fas fa-key"></i> Inspector</a>{% endif %}
+      {% if features.get('token_introspection') %}<a href="{{ url_for('token_introspect.introspect') }}"><i class="fas fa-search"></i> Introspect</a>{% endif %}
+      {% if features.get('audit_log') %}<a href="{{ url_for('audit_log.audit_log') }}"><i class="fas fa-list"></i> Audit</a>{% endif %}
+      {% if features.get('oidc_flow') %}<a href="{{ url_for('oidc_flow.oidc_flow') }}"><i class="fas fa-project-diagram"></i> OIDC Flow</a>{% endif %}
+      {% if features.get('rbac') %}<a href="{{ url_for('admin.admin_panel') }}"><i class="fas fa-cog"></i> Admin</a>{% endif %}
+      <a href="{{ url_for('routes.logout') }}" style="color:#ef4444"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <h1><i class="fas fa-bug" style="color:var(--red)"></i> Debug / Trace Panel</h1>
+    <p class="subtitle">Raw OIDC data from your current session — for development and learning only. Raw tokens are hidden from session view.</p>
+    <div class="warn-banner"><i class="fas fa-exclamation-triangle"></i> <strong>Developer Mode:</strong> This page exposes sensitive authentication data. Disable the Debug Trace feature in production.</div>
+
+    <div class="tab-bar">
+      <button class="tab active" onclick="switchTab(this,'t-session')"><i class="fas fa-database"></i> Session</button>
+      <button class="tab" onclick="switchTab(this,'t-idtoken')"><i class="fas fa-id-card"></i> ID Token</button>
+      <button class="tab" onclick="switchTab(this,'t-access')"><i class="fas fa-key"></i> Access Token</button>
+      <button class="tab" onclick="switchTab(this,'t-userinfo')"><i class="fas fa-user"></i> UserInfo</button>
+    </div>
+
+    <div class="tab-content">
+      <!-- Session -->
+      <div class="panel active" id="t-session">
+        <div class="section-title"><i class="fas fa-database"></i> Flask Session (tokens hidden)</div>
+        <table class="kv-table">
+          {% for k, v in safe_session.items() %}
+          <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+
+      <!-- ID Token -->
+      <div class="panel" id="t-idtoken">
+        <div class="section-title"><i class="fas fa-id-card"></i> ID Token — Decoded Claims</div>
+        {% if id_decoded %}
+        <table class="kv-table" style="margin-bottom:1.5rem">
+          {% for k, v in id_decoded.items() %}
+          <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+          {% endfor %}
+        </table>
+        <div class="section-title"><i class="fas fa-code"></i> Raw JWT</div>
+        <div style="position:relative">
+          <pre id="raw-id">{{ id_token }}</pre>
+          <button class="copy-btn" onclick="copyText('raw-id',this)"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+        {% else %}<p style="color:var(--muted);padding:1rem">No ID token found in session.</p>{% endif %}
+      </div>
+
+      <!-- Access Token -->
+      <div class="panel" id="t-access">
+        <div class="section-title"><i class="fas fa-key"></i> Access Token — Decoded Claims</div>
+        {% if access_decoded %}
+        <table class="kv-table" style="margin-bottom:1.5rem">
+          {% for k, v in access_decoded.items() %}
+          <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+          {% endfor %}
+        </table>
+        {% else %}<p style="color:var(--muted);padding-bottom:1rem">Access token is not a JWT or is opaque (cannot decode).</p>{% endif %}
+        <div class="section-title"><i class="fas fa-code"></i> Raw Token</div>
+        <div style="position:relative">
+          <pre id="raw-at">{{ access_token }}</pre>
+          <button class="copy-btn" onclick="copyText('raw-at',this)"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+      </div>
+
+      <!-- UserInfo -->
+      <div class="panel" id="t-userinfo">
+        <div class="section-title"><i class="fas fa-user"></i> Merged UserInfo Claims</div>
+        <div style="position:relative">
+          <pre id="raw-ui">{{ user_info | tojson(indent=2) }}</pre>
+          <button class="copy-btn" onclick="copyText('raw-ui',this)"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+function switchTab(btn, id) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+function copyText(preId, btn) {
+  const text = document.getElementById(preId).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    setTimeout(()=>{btn.innerHTML='<i class="fas fa-copy"></i> Copy';}, 2000);
+  });
+}
+</script>
+</body>
+</html>

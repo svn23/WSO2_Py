@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Introspection | SecureSphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--card2:#1f2940;--txt:#f1f5f9;--txt2:#94a3b8;--muted:#64748b;--cyan:#22d3ee;--cyan2:#06b6d4;--glow:rgba(34,211,238,.25);--border:rgba(148,163,184,.1);--green:#10b981;--red:#ef4444;--yellow:#f59e0b;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column;}
+        .bg-anim{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+        .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.35;animation:float 20s ease-in-out infinite;}
+        .o1{width:500px;height:500px;background:radial-gradient(circle,var(--cyan),transparent 70%);top:-200px;right:-100px;}
+        .o2{width:400px;height:400px;background:radial-gradient(circle,#0ea5e9,transparent 70%);bottom:-150px;left:-100px;animation-delay:-10s;}
+        @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,20px)}}
+        header{background:rgba(17,24,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:.9rem 2rem;position:sticky;top:0;z-index:100;}
+        .hdr{max-width:1300px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
+        .logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:var(--txt);}
+        .logo-i{width:38px;height:38px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 0 18px var(--glow);}
+        .logo-t{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--txt),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        nav{display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;}
+        nav a{color:var(--txt2);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s;}
+        nav a:hover{color:var(--cyan);}
+        nav a.active{color:var(--cyan);}
+        main{flex:1;padding:2rem;position:relative;z-index:1;}
+        .container{max-width:900px;margin:0 auto;}
+        h1{font-size:1.6rem;font-weight:700;margin-bottom:.4rem;background:linear-gradient(135deg,var(--txt),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .subtitle{color:var(--txt2);font-size:.9rem;margin-bottom:2rem;}
+        .status-banner{border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem;font-weight:600;font-size:1rem;}
+        .active-banner{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:var(--green);}
+        .inactive-banner{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:var(--red);}
+        .error-banner{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--yellow);}
+        .claims-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;margin-bottom:2rem;}
+        .claim-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem;transition:all .3s;}
+        .claim-card:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.25);}
+        .claim-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
+        .claim-label i{color:var(--cyan);}
+        .claim-value{font-size:1rem;font-weight:600;color:var(--txt);word-break:break-all;}
+        .claim-value.ts{font-family:monospace;font-size:.85rem;color:var(--txt2);}
+        .raw-toggle{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:2rem;}
+        .raw-header{padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;}
+        .raw-header:hover{background:var(--card2);}
+        .raw-body{display:none;padding:1.5rem;background:var(--bg2);}
+        .raw-body.open{display:block;}
+        pre{font-family:monospace;font-size:.82rem;color:var(--txt2);white-space:pre-wrap;word-break:break-all;}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+        @media(max-width:600px){.grid-2{grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+<div class="bg-anim"><div class="orb o1"></div><div class="orb o2"></div></div>
+<header>
+  <div class="hdr">
+    <a href="{{ url_for('routes.user_home') }}" class="logo">
+      <div class="logo-i"><i class="fas fa-shield-halved"></i></div>
+      <span class="logo-t">SecureSphere</span>
+    </a>
+    <nav>
+      <a href="{{ url_for('routes.user_home') }}"><i class="fas fa-home"></i> Home</a>
+      <a href="{{ url_for('routes.user_profile') }}"><i class="fas fa-user"></i> Profile</a>
+      <a href="{{ url_for('token_introspect.introspect') }}" class="active"><i class="fas fa-search"></i> Introspect</a>
+      {% if features.get('token_inspector') %}<a href="{{ url_for('token_inspector.inspect') }}"><i class="fas fa-key"></i> Inspector</a>{% endif %}
+      {% if features.get('audit_log') %}<a href="{{ url_for('audit_log.audit_log') }}"><i class="fas fa-list"></i> Audit</a>{% endif %}
+      {% if features.get('oidc_flow') %}<a href="{{ url_for('oidc_flow.oidc_flow') }}"><i class="fas fa-project-diagram"></i> OIDC Flow</a>{% endif %}
+      {% if features.get('debug_trace') %}<a href="{{ url_for('debug_trace.debug_trace') }}"><i class="fas fa-bug"></i> Debug</a>{% endif %}
+      {% if features.get('rbac') %}<a href="{{ url_for('admin.admin_panel') }}"><i class="fas fa-cog"></i> Admin</a>{% endif %}
+      <a href="{{ url_for('routes.logout') }}" style="color:#ef4444"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <h1><i class="fas fa-search" style="color:var(--cyan)"></i> Token Introspection</h1>
+    <p class="subtitle">Live validation of your access token against the WSO2 introspection endpoint.</p>
+
+    {% if error %}
+    <div class="status-banner error-banner"><i class="fas fa-exclamation-triangle"></i> {{ error }}</div>
+    {% elif result %}
+      {% if result.get('active') %}
+      <div class="status-banner active-banner"><i class="fas fa-check-circle"></i> Token is ACTIVE and valid</div>
+      {% else %}
+      <div class="status-banner inactive-banner"><i class="fas fa-times-circle"></i> Token is INACTIVE or expired</div>
+      {% endif %}
+
+      <div class="claims-grid">
+        {% for key, icon, label in [
+          ('active','fas fa-toggle-on','Active'),('username','fas fa-user','Username'),
+          ('client_id','fas fa-id-badge','Client ID'),('scope','fas fa-list','Scopes'),
+          ('token_type','fas fa-tag','Token Type'),('sub','fas fa-fingerprint','Subject (sub)'),
+          ('iat','fas fa-clock','Issued At'),('exp','fas fa-hourglass-end','Expires At'),
+          ('nbf','fas fa-calendar','Not Before'),('aud','fas fa-bullseye','Audience')] %}
+        {% if result.get(key) is not none %}
+        <div class="claim-card">
+          <div class="claim-label"><i class="{{ icon }}"></i> {{ label }}</div>
+          <div class="claim-value {% if key in ['iat','exp','nbf'] %}ts{% endif %}">
+            {% if key in ['iat','exp','nbf'] %}
+              {{ result[key] }} <span style="color:var(--muted);font-size:.75rem">(epoch)</span>
+            {% else %}
+              {{ result[key] }}
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="raw-toggle">
+        <div class="raw-header" onclick="this.nextElementSibling.classList.toggle('open')">
+          <span style="font-weight:600;color:var(--txt2)"><i class="fas fa-code" style="color:var(--cyan);margin-right:.5rem"></i>Raw JSON Response</span>
+          <i class="fas fa-chevron-down" style="color:var(--muted)"></i>
+        </div>
+        <div class="raw-body"><pre>{{ result | tojson(indent=2) }}</pre></div>
+      </div>
+    {% else %}
+    <div class="status-banner error-banner"><i class="fas fa-info-circle"></i> No introspection result available.</div>
+    {% endif %}
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Inspector | SecureSphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--card2:#1f2940;--txt:#f1f5f9;--txt2:#94a3b8;--muted:#64748b;--cyan:#22d3ee;--cyan2:#06b6d4;--glow:rgba(34,211,238,.25);--border:rgba(148,163,184,.1);--purple:#a78bfa;--green:#10b981;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column;}
+        .bg-anim{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+        .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.35;animation:float 20s ease-in-out infinite;}
+        .o1{width:500px;height:500px;background:radial-gradient(circle,var(--cyan),transparent 70%);top:-200px;right:-100px;}
+        .o2{width:400px;height:400px;background:radial-gradient(circle,#8b5cf6,transparent 70%);bottom:-150px;left:-100px;animation-delay:-10s;}
+        @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,20px)}}
+        header{background:rgba(17,24,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:.9rem 2rem;position:sticky;top:0;z-index:100;}
+        .hdr{max-width:1300px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
+        .logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:var(--txt);}
+        .logo-i{width:38px;height:38px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 0 18px var(--glow);}
+        .logo-t{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--txt),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        nav{display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;}
+        nav a{color:var(--txt2);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s;}
+        nav a:hover,nav a.active{color:var(--cyan);}
+        main{flex:1;padding:2rem;position:relative;z-index:1;}
+        .container{max-width:1100px;margin:0 auto;}
+        h1{font-size:1.6rem;font-weight:700;margin-bottom:.4rem;background:linear-gradient(135deg,var(--txt),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .subtitle{color:var(--txt2);font-size:.9rem;margin-bottom:2rem;}
+        .panels{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;}
+        @media(max-width:768px){.panels{grid-template-columns:1fr;}}
+        .panel{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;}
+        .panel-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;}
+        .panel-header .badge{padding:.25rem .75rem;border-radius:20px;font-size:.75rem;font-weight:600;}
+        .id-badge{background:rgba(34,211,238,.12);color:var(--cyan);}
+        .at-badge{background:rgba(167,139,250,.12);color:var(--purple);}
+        .panel-title{font-weight:600;font-size:1rem;}
+        .claims-table{width:100%;}
+        .claims-table tr{border-bottom:1px solid var(--border);}
+        .claims-table tr:last-child{border-bottom:none;}
+        .claims-table td{padding:.75rem 1.5rem;font-size:.875rem;}
+        .claims-table td:first-child{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;width:40%;}
+        .claims-table td:last-child{color:var(--txt);word-break:break-all;font-family:monospace;}
+        .ts-val{color:var(--cyan)!important;font-size:.8rem!important;}
+        .raw-section{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;}
+        .raw-tab-bar{display:flex;border-bottom:1px solid var(--border);}
+        .raw-tab{flex:1;padding:.9rem;text-align:center;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--txt2);transition:all .2s;border:none;background:transparent;}
+        .raw-tab.active{color:var(--cyan);border-bottom:2px solid var(--cyan);}
+        .raw-tab:hover{color:var(--txt);}
+        .raw-panel{display:none;padding:1.5rem;background:var(--bg2);}
+        .raw-panel.active{display:block;}
+        pre{font-family:monospace;font-size:.8rem;color:var(--txt2);white-space:pre-wrap;word-break:break-all;line-height:1.6;}
+        .no-token{padding:2rem;text-align:center;color:var(--muted);}
+        .chip{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;border-radius:12px;font-size:.72rem;font-weight:500;}
+        .chip-ts{background:rgba(34,211,238,.1);color:var(--cyan);}
+        .chip-bool{background:rgba(16,185,129,.1);color:var(--green);}
+    </style>
+</head>
+<body>
+<div class="bg-anim"><div class="orb o1"></div><div class="orb o2"></div></div>
+<header>
+  <div class="hdr">
+    <a href="{{ url_for('routes.user_home') }}" class="logo">
+      <div class="logo-i"><i class="fas fa-shield-halved"></i></div>
+      <span class="logo-t">SecureSphere</span>
+    </a>
+    <nav>
+      <a href="{{ url_for('routes.user_home') }}"><i class="fas fa-home"></i> Home</a>
+      <a href="{{ url_for('routes.user_profile') }}"><i class="fas fa-user"></i> Profile</a>
+      <a href="{{ url_for('token_inspector.inspect') }}" class="active"><i class="fas fa-key"></i> Inspector</a>
+      {% if features.get('token_introspection') %}<a href="{{ url_for('token_introspect.introspect') }}"><i class="fas fa-search"></i> Introspect</a>{% endif %}
+      {% if features.get('audit_log') %}<a href="{{ url_for('audit_log.audit_log') }}"><i class="fas fa-list"></i> Audit</a>{% endif %}
+      {% if features.get('oidc_flow') %}<a href="{{ url_for('oidc_flow.oidc_flow') }}"><i class="fas fa-project-diagram"></i> OIDC Flow</a>{% endif %}
+      {% if features.get('debug_trace') %}<a href="{{ url_for('debug_trace.debug_trace') }}"><i class="fas fa-bug"></i> Debug</a>{% endif %}
+      {% if features.get('rbac') %}<a href="{{ url_for('admin.admin_panel') }}"><i class="fas fa-cog"></i> Admin</a>{% endif %}
+      <a href="{{ url_for('routes.logout') }}" style="color:#ef4444"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <h1><i class="fas fa-key" style="color:var(--cyan)"></i> JWT Token Inspector</h1>
+    <p class="subtitle">Decoded claims from your ID Token and Access Token — no signature verification performed.</p>
+
+    <div class="panels">
+      <!-- ID Token -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="badge id-badge">ID Token</span>
+          <span class="panel-title">Identity Claims</span>
+        </div>
+        {% if id_claims %}
+        <table class="claims-table">
+          {% for k, v in id_claims.items() %}
+          <tr>
+            <td>{{ k }}</td>
+            <td {% if k in ['iat','exp','auth_time','nbf'] %}class="ts-val"{% endif %}>
+              {% if k in ['iat','exp','auth_time','nbf'] %}
+                {{ v }} &nbsp;<span class="chip chip-ts"><i class="fas fa-clock"></i> timestamp</span>
+              {% elif v is sameas true or v is sameas false %}
+                {{ v }} &nbsp;<span class="chip chip-bool">bool</span>
+              {% else %}
+                {{ v }}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}<div class="no-token"><i class="fas fa-info-circle"></i> No ID Token found in session.</div>{% endif %}
+      </div>
+
+      <!-- Access Token -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="badge at-badge">Access Token</span>
+          <span class="panel-title">Authorization Claims</span>
+        </div>
+        {% if access_claims %}
+        <table class="claims-table">
+          {% for k, v in access_claims.items() %}
+          <tr>
+            <td>{{ k }}</td>
+            <td {% if k in ['iat','exp','nbf'] %}class="ts-val"{% endif %}>
+              {% if k in ['iat','exp','nbf'] %}
+                {{ v }} &nbsp;<span class="chip chip-ts"><i class="fas fa-clock"></i> timestamp</span>
+              {% elif v is sameas true or v is sameas false %}
+                {{ v }} &nbsp;<span class="chip chip-bool">bool</span>
+              {% else %}{{ v }}{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}<div class="no-token"><i class="fas fa-info-circle"></i> Access token is not a JWT or not present.</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Raw JWTs -->
+    <div class="raw-section">
+      <div class="raw-tab-bar">
+        <button class="raw-tab active" onclick="switchTab(this,'rt-id')">ID Token (raw)</button>
+        <button class="raw-tab" onclick="switchTab(this,'rt-at')">Access Token (raw)</button>
+      </div>
+      <div id="rt-id" class="raw-panel active"><pre>{{ id_token or 'No ID token in session.' }}</pre></div>
+      <div id="rt-at" class="raw-panel"><pre>{{ access_token or 'No access token in session.' }}</pre></div>
+    </div>
+  </div>
+</main>
+<script>
+function switchTab(btn, id) {
+  document.querySelectorAll('.raw-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.raw-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>

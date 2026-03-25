@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OIDC Flow Visualizer | SecureSphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2322d3ee'/%3E%3Cstop offset='100%25' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='20' fill='url(%23g)'/%3E%3Cpath d='M50 20 L70 35 L70 55 L50 70 L30 55 L30 35 Z' fill='none' stroke='%230a0f1a' stroke-width='6'/%3E%3Ccircle cx='50' cy='45' r='8' fill='%230a0f1a'/%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg-primary: #0a0f1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2234;
+            --bg-card-hover: #1f2940;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-cyan: #22d3ee;
+            --accent-cyan-dark: #06b6d4;
+            --accent-glow: rgba(34, 211, 238, 0.25);
+            --accent-glow-strong: rgba(34, 211, 238, 0.4);
+            --border-color: rgba(148, 163, 184, 0.12);
+            --border-hover: rgba(34, 211, 238, 0.5);
+            --green: #10b981;
+            --green-glow: rgba(16, 185, 129, 0.2);
+            --red: #ef4444;
+            --yellow: #f59e0b;
+            --purple: #a78bfa;
+            --purple-glow: rgba(167, 139, 250, 0.2);
+            --orange: #fb923c;
+            --orange-glow: rgba(251, 146, 60, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.35;
+            animation: orbFloat 25s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent-cyan), transparent 70%);
+            top: -250px;
+            right: -150px;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--purple), transparent 70%);
+            bottom: -200px;
+            left: -150px;
+            animation-delay: -12s;
+        }
+
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, var(--orange), transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.15;
+            animation-delay: -6s;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(-30px, 20px) scale(1.05); }
+            50% { transform: translate(-20px, -30px) scale(0.95); }
+            75% { transform: translate(30px, -20px) scale(1.02); }
+        }
+
+        /* Grid Pattern Overlay */
+        .grid-pattern {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: 
+                linear-gradient(rgba(148, 163, 184, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-cyan-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .logo-text {
+            font-size: 1.35rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        nav {
+            display: flex;
+            gap: 1.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--accent-cyan);
+        }
+
+        nav a.logout {
+            color: var(--red);
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            padding: 2.5rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2.5rem;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--accent-cyan);
+        }
+
+        .page-title span {
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 600px;
+        }
+
+        /* Actors Section */
+        .actors-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+            animation: fadeInUp 0.6s ease 0.1s both;
+        }
+
+        .actor-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .actor-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent-glow), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .actor-card.highlight {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--accent-glow);
+            transform: translateY(-4px);
+        }
+
+        .actor-card.highlight::before {
+            opacity: 1;
+        }
+
+        .actor-icon {
+            font-size: 2.75rem;
+            margin-bottom: 0.75rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .actor-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .actor-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.6s ease 0.2s both;
+        }
+
+        .btn {
+            padding: 0.75rem 1.75rem;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-cyan-dark));
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 25px var(--accent-glow), 0 8px 25px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .step-counter {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-left: auto;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Steps List */
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.6s ease 0.3s both;
+        }
+
+        .step-row {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.4;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-row::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: transparent;
+            transition: background 0.3s ease;
+        }
+
+        .step-row.active {
+            opacity: 1;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 30px var(--accent-glow);
+            background: var(--bg-card-hover);
+            transform: translateX(8px);
+        }
+
+        .step-row.active::before {
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-cyan-dark));
+        }
+
+        .step-row.done {
+            opacity: 0.65;
+            border-color: var(--green);
+        }
+
+        .step-row.done::before {
+            background: var(--green);
+        }
+
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            transition: all 0.4s ease;
+        }
+
+        .step-row.active .step-number {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-cyan-dark));
+            border-color: transparent;
+            color: var(--bg-primary);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .step-row.done .step-number {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .step-row.done .step-number::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+        }
+
+        .step-row.done .step-number span {
+            display: none;
+        }
+
+        .step-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 1rem;
+        }
+
+        .step-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .step-arrow {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.4rem 0.9rem;
+            border-radius: 25px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .arrow-browser-app,
+        .arrow-app-browser {
+            background: rgba(34, 211, 238, 0.1);
+            color: var(--accent-cyan);
+        }
+
+        .arrow-app-idp,
+        .arrow-idp-app {
+            background: var(--purple-glow);
+            color: var(--purple);
+        }
+
+        .arrow-browser-idp,
+        .arrow-idp-browser {
+            background: var(--orange-glow);
+            color: var(--orange);
+        }
+
+        /* Description Card */
+        .description-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.75rem;
+            min-height: 140px;
+            transition: all 0.4s ease;
+            animation: fadeInUp 0.6s ease 0.4s both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .description-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--purple), var(--orange));
+            opacity: 0.7;
+        }
+
+        .desc-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.9rem;
+            border-radius: 25px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .desc-tag.oidc {
+            background: rgba(34, 211, 238, 0.12);
+            color: var(--accent-cyan);
+        }
+
+        .desc-tag.security {
+            background: var(--green-glow);
+            color: var(--green);
+        }
+
+        .description-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+        }
+
+        .description-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        code {
+            background: rgba(34, 211, 238, 0.12);
+            color: var(--accent-cyan);
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+        }
+
+        .placeholder-text {
+            color: var(--text-muted);
+        }
+
+        .placeholder-text strong {
+            color: var(--accent-cyan);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .actors-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav {
+                justify-content: center;
+            }
+
+            .step-row {
+                flex-wrap: wrap;
+            }
+
+            .step-arrow {
+                width: 100%;
+                justify-content: center;
+                margin-top: 0.5rem;
+            }
+
+            .controls {
+                justify-content: center;
+            }
+
+            .step-counter {
+                margin-left: 0;
+                width: 100%;
+                text-align: center;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <div class="grid-pattern"></div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <a href="{{ url_for('routes.user_home') if given_name else '#' }}" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <span class="logo-text">SecureSphere</span>
+            </a>
+            <nav>
+                {% if given_name %}
+                <a href="{{ url_for('routes.user_home') }}"><i class="fas fa-home"></i> Home</a>
+                {% endif %}
+                <a href="{{ url_for('oidc_flow.oidc_flow') }}" class="active"><i class="fas fa-project-diagram"></i> OIDC Flow</a>
+                {% if features.get('token_inspector') %}
+                <a href="{{ url_for('token_inspector.inspect') }}"><i class="fas fa-key"></i> Inspector</a>
+                {% endif %}
+                {% if features.get('audit_log') %}
+                <a href="{{ url_for('audit_log.audit_log') }}"><i class="fas fa-list"></i> Audit</a>
+                {% endif %}
+                {% if features.get('debug_trace') %}
+                <a href="{{ url_for('debug_trace.debug_trace') }}"><i class="fas fa-bug"></i> Debug</a>
+                {% endif %}
+                {% if features.get('rbac') %}
+                <a href="{{ url_for('admin.admin_panel') }}"><i class="fas fa-cog"></i> Admin</a>
+                {% endif %}
+                {% if given_name %}
+                <a href="{{ url_for('routes.logout') }}" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-project-diagram"></i>
+                    <span>OIDC Authorization Code Flow</span>
+                </h1>
+                <p class="page-subtitle">An interactive step-by-step visualization of how your login actually works. No login required to view.</p>
+            </div>
+
+            <!-- Actors -->
+            <div class="actors-grid">
+                <div class="actor-card" id="actor-browser">
+                    <div class="actor-icon">🌐</div>
+                    <div class="actor-name">Browser</div>
+                    <div class="actor-subtitle">End User</div>
+                </div>
+                <div class="actor-card" id="actor-app">
+                    <div class="actor-icon">🛡️</div>
+                    <div class="actor-name">SecureSphere</div>
+                    <div class="actor-subtitle">Client App (this app)</div>
+                </div>
+                <div class="actor-card" id="actor-idp">
+                    <div class="actor-icon">🔐</div>
+                    <div class="actor-name">WSO2 IdP</div>
+                    <div class="actor-subtitle">Authorization Server</div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="btn btn-primary" onclick="playAll()" id="playBtn">
+                    <i class="fas fa-play"></i> Play All
+                </button>
+                <button class="btn btn-secondary" onclick="stepForward()" id="nextBtn">
+                    <i class="fas fa-step-forward"></i> Step
+                </button>
+                <button class="btn btn-secondary" onclick="resetFlow()">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+                <span class="step-counter" id="stepCounter">Step 0 / 9</span>
+            </div>
+
+            <!-- Steps List -->
+            <div class="steps-list" id="stepsList">
+                <div class="step-row" data-step="1" data-actors="browser,app">
+                    <div class="step-number"><span>1</span></div>
+                    <div class="step-info">
+                        <div class="step-title">User Clicks Login</div>
+                        <div class="step-desc">Browser sends GET request to <code>/OIDC/wso2/login</code></div>
+                    </div>
+                    <div class="step-arrow arrow-browser-app"><i class="fas fa-arrow-right"></i> Browser → App</div>
+                </div>
+
+                <div class="step-row" data-step="2" data-actors="app,browser">
+                    <div class="step-number"><span>2</span></div>
+                    <div class="step-info">
+                        <div class="step-title">App Builds Auth Request</div>
+                        <div class="step-desc">App generates auth URL with <code>client_id</code>, <code>redirect_uri</code>, <code>scope</code>{% if features.get('pkce') %}, and PKCE <code>code_challenge</code>{% endif %}</div>
+                    </div>
+                    <div class="step-arrow arrow-app-browser"><i class="fas fa-arrow-left"></i> App → Browser (302)</div>
+                </div>
+
+                <div class="step-row" data-step="3" data-actors="browser,idp">
+                    <div class="step-number"><span>3</span></div>
+                    <div class="step-info">
+                        <div class="step-title">Browser Redirected to WSO2</div>
+                        <div class="step-desc">Browser follows redirect to WSO2 AuthN endpoint with all auth parameters</div>
+                    </div>
+                    <div class="step-arrow arrow-browser-idp"><i class="fas fa-arrow-right"></i> Browser → WSO2</div>
+                </div>
+
+                <div class="step-row" data-step="4" data-actors="idp,browser">
+                    <div class="step-number"><span>4</span></div>
+                    <div class="step-info">
+                        <div class="step-title">WSO2 Shows Login Form</div>
+                        <div class="step-desc">WSO2 validates request parameters and renders its login page to the user</div>
+                    </div>
+                    <div class="step-arrow arrow-idp-browser"><i class="fas fa-arrow-left"></i> WSO2 → Browser</div>
+                </div>
+
+                <div class="step-row" data-step="5" data-actors="browser,idp">
+                    <div class="step-number"><span>5</span></div>
+                    <div class="step-info">
+                        <div class="step-title">User Submits Credentials</div>
+                        <div class="step-desc">Browser POSTs username + password to WSO2 for authentication</div>
+                    </div>
+                    <div class="step-arrow arrow-browser-idp"><i class="fas fa-arrow-right"></i> Browser → WSO2</div>
+                </div>
+
+                <div class="step-row" data-step="6" data-actors="idp,app">
+                    <div class="step-number"><span>6</span></div>
+                    <div class="step-info">
+                        <div class="step-title">WSO2 Issues Authorization Code</div>
+                        <div class="step-desc">WSO2 redirects browser to <code>redirect_uri</code> with a short-lived <code>code</code></div>
+                    </div>
+                    <div class="step-arrow arrow-idp-app"><i class="fas fa-arrow-left"></i> WSO2 → App (code)</div>
+                </div>
+
+                <div class="step-row" data-step="7" data-actors="app,idp">
+                    <div class="step-number"><span>7</span></div>
+                    <div class="step-info">
+                        <div class="step-title">App Exchanges Code for Tokens</div>
+                        <div class="step-desc">App POSTs <code>code</code> + <code>client_secret</code>{% if features.get('pkce') %} + <code>code_verifier</code> (PKCE){% endif %} to token endpoint</div>
+                    </div>
+                    <div class="step-arrow arrow-app-idp"><i class="fas fa-arrow-right"></i> App → WSO2 (POST)</div>
+                </div>
+
+                <div class="step-row" data-step="8" data-actors="idp,app">
+                    <div class="step-number"><span>8</span></div>
+                    <div class="step-info">
+                        <div class="step-title">WSO2 Returns Tokens</div>
+                        <div class="step-desc">WSO2 responds with <code>access_token</code>, <code>id_token</code>, and optionally <code>refresh_token</code></div>
+                    </div>
+                    <div class="step-arrow arrow-idp-app"><i class="fas fa-arrow-left"></i> WSO2 → App (tokens)</div>
+                </div>
+
+                <div class="step-row" data-step="9" data-actors="app,browser">
+                    <div class="step-number"><span>9</span></div>
+                    <div class="step-info">
+                        <div class="step-title">App Fetches UserInfo &amp; Renders Dashboard</div>
+                        <div class="step-desc">App calls <code>/userinfo</code> with access token, merges claims, creates session, redirects to dashboard</div>
+                    </div>
+                    <div class="step-arrow arrow-app-browser"><i class="fas fa-arrow-left"></i> App → Browser</div>
+                </div>
+            </div>
+
+            <!-- Description Card -->
+            <div class="description-card" id="descCard">
+                <p class="placeholder-text">Press <strong>Play All</strong> to animate through the full OIDC Authorization Code flow, or use <strong>Step</strong> to go one step at a time.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // PKCE feature flag from server
+        const PKCE_ENABLED = JSON.parse('{{ features.get("pkce") | tojson | safe }}');
+
+        // Step descriptions
+        const descriptions = {
+            1: {
+                tag: 'OIDC Step 1',
+                cls: 'oidc',
+                title: 'User-Initiated Login',
+                body: 'The user clicks "Login" in the browser. The browser sends a GET request to the app\'s <code>/OIDC/wso2/login</code> route — this is the entry point to the entire OAuth 2.0 Authorization Code flow.'
+            },
+            2: {
+                tag: 'OIDC Step 2',
+                cls: 'oidc',
+                title: 'Building the Authorization Request',
+                body: 'The app generates a full authorization URL pointing to WSO2\'s <code>/oauth2/authorize</code> endpoint. It includes <code>client_id</code>, <code>redirect_uri</code>, <code>scope</code>, and <code>response_type=code</code>.' + (PKCE_ENABLED ? ' Since PKCE is enabled, a cryptographic <code>code_verifier</code> is generated, hashed with SHA-256, and included as <code>code_challenge</code>.' : '')
+            },
+            3: {
+                tag: 'OIDC Step 3',
+                cls: 'oidc',
+                title: 'Redirect to WSO2 Identity Provider',
+                body: 'The browser follows the 302 redirect and arrives at WSO2\'s login endpoint. All authorization parameters are passed in the query string. WSO2 validates the client_id and redirect_uri against its registered applications.'
+            },
+            4: {
+                tag: 'OIDC Step 4',
+                cls: 'security',
+                title: 'Authentication by WSO2',
+                body: 'WSO2 renders its login form to the user. This is the actual authentication step — the user\'s credentials never reach the app; they go directly to WSO2. This is one of the key security benefits of OIDC.'
+            },
+            5: {
+                tag: 'OIDC Step 5',
+                cls: 'oidc',
+                title: 'Credential Submission',
+                body: 'The user submits their credentials to WSO2. WSO2 verifies the username and password against its user store (like LDAP or a local user database). Upon success, it creates a server-side session for the user.'
+            },
+            6: {
+                tag: 'OIDC Step 6',
+                cls: 'security',
+                title: 'Authorization Code Issued',
+                body: 'WSO2 redirects the browser to the app\'s <code>redirect_uri</code> with a short-lived, single-use <code>authorization_code</code> in the query string. This code is opaque to the browser and must not be confused with a token.'
+            },
+            7: {
+                tag: 'OIDC Step 7',
+                cls: 'oidc',
+                title: 'Back-Channel Token Exchange',
+                body: 'The app\'s server makes a direct POST to WSO2\'s token endpoint — this is a server-to-server call the browser never sees. It sends the <code>code</code>, <code>client_secret</code>' + (PKCE_ENABLED ? ', and the PKCE <code>code_verifier</code>.' : '.') + ' This is the "back channel" — more secure than browser-based flows.'
+            },
+            8: {
+                tag: 'OIDC Step 8',
+                cls: 'security',
+                title: 'Token Response',
+                body: 'WSO2 validates everything and responds with: <code>access_token</code> (to call APIs), <code>id_token</code> (JWT with user identity claims), and optionally <code>refresh_token</code> and <code>expires_in</code>.'
+            },
+            9: {
+                tag: 'OIDC Step 9',
+                cls: 'oidc',
+                title: 'UserInfo & Session Creation',
+                body: 'The app uses the access token to call WSO2\'s <code>/userinfo</code> endpoint to get profile claims. It merges these with ID token claims, stores them in a server-side session, and redirects the browser to the dashboard. You are now logged in!'
+            }
+        };
+
+        // Actor element mapping
+        const actorMap = {
+            browser: 'actor-browser',
+            app: 'actor-app',
+            idp: 'actor-idp'
+        };
+
+        let currentStep = 0;
+        let playing = false;
+        let timer = null;
+
+        function setStep(n) {
+            const rows = document.querySelectorAll('.step-row');
+            
+            rows.forEach(row => {
+                const stepNum = parseInt(row.dataset.step);
+                row.classList.remove('active', 'done');
+                
+                if (stepNum < n) {
+                    row.classList.add('done');
+                } else if (stepNum === n) {
+                    row.classList.add('active');
+                }
+            });
+
+            // Highlight actors
+            Object.values(actorMap).forEach(id => {
+                document.getElementById(id).classList.remove('highlight');
+            });
+
+            if (n > 0) {
+                const activeRow = document.querySelector(`.step-row[data-step="${n}"]`);
+                if (activeRow) {
+                    const actors = activeRow.dataset.actors.split(',');
+                    actors.forEach(actor => {
+                        if (actorMap[actor]) {
+                            document.getElementById(actorMap[actor]).classList.add('highlight');
+                        }
+                    });
+                }
+            }
+
+            // Update description card
+            const card = document.getElementById('descCard');
+            const desc = descriptions[n];
+            
+            if (desc) {
+                card.innerHTML = `
+                    <span class="desc-tag ${desc.cls}">
+                        <i class="fas fa-info-circle"></i> ${desc.tag}
+                    </span>
+                    <h3>${desc.title}</h3>
+                    <p>${desc.body}</p>
+                `;
+            } else {
+                card.innerHTML = '<p class="placeholder-text">Press <strong>Play All</strong> to animate through the full OIDC Authorization Code flow, or use <strong>Step</strong> to go one step at a time.</p>';
+            }
+
+            // Update counter
+            document.getElementById('stepCounter').textContent = `Step ${n} / 9`;
+            currentStep = n;
+        }
+
+        function stepForward() {
+            if (currentStep < 9) {
+                setStep(currentStep + 1);
+            }
+        }
+
+        function resetFlow() {
+            clearInterval(timer);
+            playing = false;
+            document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i> Play All';
+            setStep(0);
+        }
+
+        function playAll() {
+            if (playing) {
+                clearInterval(timer);
+                playing = false;
+                document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i> Play All';
+                return;
+            }
+
+            if (currentStep >= 9) {
+                setStep(0);
+            }
+
+            playing = true;
+            document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i> Pause';
+
+            timer = setInterval(() => {
+                if (currentStep >= 9) {
+                    clearInterval(timer);
+                    playing = false;
+                    document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i> Play All';
+                } else {
+                    stepForward();
+                }
+            }, 2000);
+        }
+
+        // Mouse parallax effect on orbs
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            
+            document.querySelectorAll('.orb').forEach((orb, i) => {
+                const factor = (i + 1) * 0.5;
+                orb.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+            });
+        });
+    </script>
+</body>
+</html>
