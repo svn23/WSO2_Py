@@ -606,8 +606,82 @@
             }
         }
     </style>
+
+    <style id="custom-overrides">
+        /* Unified Header Layout to prevent Nav shifting */
+        header > div, .header > div {
+            justify-content: flex-start !important;
+            gap: 2.5rem !important;
+            max-width: 1400px !important;
+            padding: 0 !important;
+        }
+        
+        /* Add some padding specifically to the container to standardize the sides and make room for logout */
+        @media (min-width: 768px) {
+            header > div, .header > div {
+                padding-left: 1.5rem !important;
+                padding-right: 80px !important; /* Huge right padding to make room for fixed logout button */
+            }
+        }
+
+        header nav, .header nav {
+            margin-right: auto !important;
+        }
+        
+        .user-dropdown {
+            margin-left: auto !important;
+        }
+
+        /* Floating Logout Button */
+        .floating-logout {
+            position: fixed;
+            top: 20px;
+            right: 25px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .floating-logout i {
+            font-size: 1.1rem;
+            margin-left: 2px;
+        }
+
+        .floating-logout:hover {
+            background: #ef4444;
+            color: #fff;
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .floating-logout {
+                top: 15px;
+                right: 15px;
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
 </head>
 <body>
+
+<!-- Floating Global Logout Button -->
+<a href="{{ url_for('routes.logout') }}" class="floating-logout" title="Secure Logout">
+    <i class="fas fa-power-off"></i>
+</a>
+
     <!-- Animated Background -->
     <div class="bg-animation">
         <div class="bg-grid"></div>
@@ -625,14 +699,15 @@
                 </div>
                 <span class="logo-text">SecureSphere</span>
             </a>
-            <nav style="display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap;">
+                        <nav style="display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap;">
                 <a href="{{ url_for('routes.user_home') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-home"></i> Home</a>
-                {% if features.get('oidc_flow') %}<a href="{{ url_for('oidc_flow.oidc_flow') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-project-diagram"></i> OIDC Flow</a>{% endif %}
-                {% if features.get('token_inspector') %}<a href="{{ url_for('token_inspector.inspect') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-key"></i> Inspector</a>{% endif %}
-                {% if features.get('token_introspection') %}<a href="{{ url_for('token_introspect.introspect') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-search"></i> Introspect</a>{% endif %}
-                {% if features.get('audit_log') %}<a href="{{ url_for('audit_log.audit_log') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-list"></i> Audit Log</a>{% endif %}
-                {% if features.get('debug_trace') %}<a href="{{ url_for('debug_trace.debug_trace') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-bug"></i> Debug</a>{% endif %}
-                {% if features.get('rbac') %}<a href="{{ url_for('admin.admin_panel') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-cog"></i> Admin</a>{% endif %}
+                <a href="{{ url_for('routes.user_profile') }}" style="color:var(--accent-primary);text-decoration:none;font-size:.85rem;font-weight:500;"><i class="fas fa-user"></i> Profile</a>
+                {% if features.get('rbac') %}<a href="{{ url_for('admin.admin_panel') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-cog"></i> Admin</a>{% endif %}
+                {% if features.get('audit_log') %}<a href="{{ url_for('audit_log.audit_log') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-list"></i> Audit</a>{% endif %}
+                {% if features.get('token_inspector') %}<a href="{{ url_for('token_inspector.inspect') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-key"></i> Inspector</a>{% endif %}
+                {% if features.get('token_introspection') %}<a href="{{ url_for('token_introspect.introspect') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-search"></i> Introspect</a>{% endif %}
+                {% if features.get('oidc_flow') %}<a href="{{ url_for('oidc_flow.oidc_flow') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-project-diagram"></i> OIDC Flow</a>{% endif %}
+                {% if features.get('debug_trace') %}<a href="{{ url_for('debug_trace.debug_trace') }}" style="color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s" onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fas fa-bug"></i> Debug</a>{% endif %}
             </nav>
 
             <div class="user-dropdown">
@@ -666,10 +741,7 @@
                         Profile
                     </a>
                     <div class="dropdown-divider"></div>
-                    <a href="{{ url_for('routes.logout') }}" class="dropdown-item" style="color: #ef4444;">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Sign Out
-                    </a>
+                    
                 </div>
             </div>
         </div>
@@ -777,6 +849,36 @@
                             </div>
                             <div class="info-value" style="font-family: monospace; font-size: 0.875rem; color: var(--text-secondary);">
                                 {{ sub }}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-building"></i>
+                                Organization
+                            </div>
+                            <div class="info-value {{ 'muted' if not org_name else '' }}">
+                                {{ org_name if org_name else "Not provided" }}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-key"></i>
+                                Auth Method (AMR)
+                            </div>
+                            <div class="info-value {{ 'muted' if not amr else '' }}">
+                                {{ amr[0] if amr and amr|length > 0 else "Unknown" }}
+                            </div>
+                        </div>
+
+                        <div class="info-item full-width">
+                            <div class="info-label">
+                                <i class="fas fa-hashtag"></i>
+                                Active Session ID
+                            </div>
+                            <div class="info-value" style="font-family: monospace; font-size: 0.875rem; color: var(--text-secondary);">
+                                {{ sid if sid else "N/A" }}
                             </div>
                         </div>
                     </div>

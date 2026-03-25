@@ -134,13 +134,6 @@ def authorized():
                 session['refresh_token'] = refresh_token
             session['token_expiry'] = time.time() + expires_in
 
-            print("\n" + "=" * 50)
-            print("WSO2 TOKEN EXCHANGE SUCCESSFUL")
-            print(f"Access Token: {access_token}")
-            print(f"ID Token:     {id_token}")
-            print(f"Expires in:   {expires_in}s")
-            print("=" * 50 + "\n")
-
             # Extract sid / iat / auth_time from ID Token
             try:
                 decoded_id = jwt.decode(id_token, options={"verify_signature": False})

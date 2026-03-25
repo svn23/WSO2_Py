@@ -78,12 +78,6 @@ def authorized():
             session['id_token'] = id_token
             session['idp'] = 'google'
             
-            print("\n" + "="*50)
-            print("GOOGLE TOKEN EXCHANGE SUCCESSFUL")
-            print(f"Access Token: {access_token}")
-            print(f"ID Token (JWT): {id_token}")
-            print("="*50 + "\n")
-            
             # Fetch user information
             user_info_response = requests.get(
                 userinfo_endpoint,

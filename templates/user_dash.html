@@ -530,8 +530,82 @@
         .animate-delay-3 { animation-delay: 0.3s; opacity: 0; }
         .animate-delay-4 { animation-delay: 0.4s; opacity: 0; }
     </style>
+
+    <style id="custom-overrides">
+        /* Unified Header Layout to prevent Nav shifting */
+        header > div, .header > div {
+            justify-content: flex-start !important;
+            gap: 2.5rem !important;
+            max-width: 1400px !important;
+            padding: 0 !important;
+        }
+        
+        /* Add some padding specifically to the container to standardize the sides and make room for logout */
+        @media (min-width: 768px) {
+            header > div, .header > div {
+                padding-left: 1.5rem !important;
+                padding-right: 80px !important; /* Huge right padding to make room for fixed logout button */
+            }
+        }
+
+        header nav, .header nav {
+            margin-right: auto !important;
+        }
+        
+        .user-dropdown {
+            margin-left: auto !important;
+        }
+
+        /* Floating Logout Button */
+        .floating-logout {
+            position: fixed;
+            top: 20px;
+            right: 25px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .floating-logout i {
+            font-size: 1.1rem;
+            margin-left: 2px;
+        }
+
+        .floating-logout:hover {
+            background: #ef4444;
+            color: #fff;
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .floating-logout {
+                top: 15px;
+                right: 15px;
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
 </head>
 <body>
+
+<!-- Floating Global Logout Button -->
+<a href="{{ url_for('routes.logout') }}" class="floating-logout" title="Secure Logout">
+    <i class="fas fa-power-off"></i>
+</a>
+
     <!-- Animated Background -->
     <div class="bg-animation">
         <div class="bg-orb bg-orb-1"></div>
@@ -553,15 +627,15 @@
                 <span class="logo-text">SecureSphere</span>
             </a>
 
-            <nav class="nav-links">
-                <a href="{{ url_for('routes.user_home') }}" class="nav-link">Dashboard</a>
-                <a href="{{ url_for('routes.user_profile') }}" class="nav-link">Profile</a>
-                {% if features.get('oidc_flow') %}<a href="{{ url_for('oidc_flow.oidc_flow') }}" class="nav-link"><i class="fas fa-project-diagram"></i> OIDC Flow</a>{% endif %}
-                {% if features.get('token_inspector') %}<a href="{{ url_for('token_inspector.inspect') }}" class="nav-link"><i class="fas fa-key"></i> Inspector</a>{% endif %}
-                {% if features.get('token_introspection') %}<a href="{{ url_for('token_introspect.introspect') }}" class="nav-link"><i class="fas fa-search"></i> Introspect</a>{% endif %}
-                {% if features.get('audit_log') %}<a href="{{ url_for('audit_log.audit_log') }}" class="nav-link"><i class="fas fa-list"></i> Audit Log</a>{% endif %}
-                {% if features.get('debug_trace') %}<a href="{{ url_for('debug_trace.debug_trace') }}" class="nav-link"><i class="fas fa-bug"></i> Debug</a>{% endif %}
-                {% if features.get('rbac') %}<a href="{{ url_for('admin.admin_panel') }}" class="nav-link"><i class="fas fa-cog"></i> Admin</a>{% endif %}
+                        <nav class="nav-links">
+                <a href="{{ url_for('routes.user_home') }}" class="nav-link class="active""><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('routes.user_profile') }}" class="nav-link "><i class="fas fa-user"></i> Profile</a>
+                {% if features.get('rbac') %}<a href="{{ url_for('admin.admin_panel') }}" class="nav-link "><i class="fas fa-cog"></i> Admin</a>{% endif %}
+                {% if features.get('audit_log') %}<a href="{{ url_for('audit_log.audit_log') }}" class="nav-link "><i class="fas fa-list"></i> Audit</a>{% endif %}
+                {% if features.get('token_inspector') %}<a href="{{ url_for('token_inspector.inspect') }}" class="nav-link "><i class="fas fa-key"></i> Inspector</a>{% endif %}
+                {% if features.get('token_introspection') %}<a href="{{ url_for('token_introspect.introspect') }}" class="nav-link "><i class="fas fa-search"></i> Introspect</a>{% endif %}
+                {% if features.get('oidc_flow') %}<a href="{{ url_for('oidc_flow.oidc_flow') }}" class="nav-link "><i class="fas fa-project-diagram"></i> OIDC Flow</a>{% endif %}
+                {% if features.get('debug_trace') %}<a href="{{ url_for('debug_trace.debug_trace') }}" class="nav-link "><i class="fas fa-bug"></i> Debug</a>{% endif %}
             </nav>
 
             <div class="user-dropdown">
@@ -594,10 +668,7 @@
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>
-                    <a href="{{ url_for('routes.logout') }}" class="dropdown-item">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Sign Out</span>
-                    </a>
+                    
                 </div>
             </div>
         </div>

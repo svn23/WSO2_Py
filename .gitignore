@@ -1,35 +1,58 @@
-# Environment Variables
-.env
-.env.*
-!.env.example
-
-# Virtual Environment
-venv/
-env/
-ENV/
-
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Certificates
-*.crt
-*.key
-*.pem
-*.p12
+# Environments & Virtual Envs
+.env
+.env.*
+!.env.example
+venv/
+env/
+ENV/
+.venv/
 
-# IDEs
+# IDEs & Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+# OS Specific
 .DS_Store
 Thumbs.db
 
-# Testing
-.pytest_cache/
-.coverage
+# Flask specific
+instance/
+.webassets-cache
+
+# Unit tests / coverage
 htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+
+# SQLite databases (if used locally)
+*.sqlite3
+db.sqlite3
+
+# Certificates and keys
+*.crt
+*.key
+*.pem
+*.p12
+
+# Build / Distribution
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+
+# Logs
+*.log

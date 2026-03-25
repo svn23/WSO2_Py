@@ -4,14 +4,38 @@ import secrets
 import logging
 from datetime import datetime, timezone
 
+from sqlalchemy import create_engine, Column, String, DateTime, text
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
 logger = logging.getLogger(__name__)
 
 # Lazy globals
 _initialized = False
 _engine = None
 _Session = None
-_AuditEvent = None
 
+
+class Base(DeclarativeBase):
+    pass
+
+class AuditEvent(Base):
+    __tablename__ = "audit_events"
+    __table_args__ = {"schema": os.getenv("DB_SCHEMA", "securesphere")}
+
+    id          = Column(String(48),  primary_key=True)
+    event_type  = Column(String(32),  nullable=False)
+    user_sub    = Column(String(255))
+    user_email  = Column(String(255))
+    first_name  = Column(String(255))
+    last_name   = Column(String(255))
+    roles       = Column(String(512))
+    auth_method = Column(String(255))
+    session_id  = Column(String(255))
+    org_name    = Column(String(255))
+    ip_address  = Column(String(64))
+    user_agent  = Column(String(512))
+    timestamp   = Column(DateTime(timezone=True),
+                         default=lambda: datetime.now(timezone.utc))
 
 def _generate_id() -> str:
     """Timestamp-based UID: {epoch_ms}_{random_hex_8}  e.g. 1742804870123_a1b2c3d4"""
@@ -19,7 +43,7 @@ def _generate_id() -> str:
 
 
 def _init_db() -> bool:
-    global _initialized, _engine, _Session, _AuditEvent
+    global _initialized, _engine, _Session
 
     if _initialized:
         return _engine is not None
@@ -33,9 +57,6 @@ def _init_db() -> bool:
         return False
 
     try:
-        from sqlalchemy import create_engine, Column, String, DateTime, text
-        from sqlalchemy.orm import DeclarativeBase, sessionmaker
-
         _engine = create_engine(database_url, pool_pre_ping=True, pool_size=5, max_overflow=10)
 
         # Auto-create schema if it doesn't exist
@@ -43,41 +64,10 @@ def _init_db() -> bool:
             conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{db_schema}"'))
             conn.commit()
 
-        class Base(DeclarativeBase):
-            pass
-
-        class AuditEvent(Base):
-            __tablename__ = "audit_events"
-            __table_args__ = {"schema": db_schema}
-
-            id          = Column(String(48),  primary_key=True)
-            event_type  = Column(String(32),  nullable=False)
-            user_sub    = Column(String(255))
-            user_email  = Column(String(255))
-            first_name  = Column(String(255))
-            last_name   = Column(String(255))
-            roles       = Column(String(512))
-            auth_method = Column(String(255))
-            session_id  = Column(String(255))
-            org_name    = Column(String(255))
-            ip_address  = Column(String(64))
-            user_agent  = Column(String(512))
-            timestamp   = Column(DateTime(timezone=True),
-                                 default=lambda: datetime.now(timezone.utc))
-
-        # Creates table only if it doesn't exist — never drops existing data
+        # Let Alembic handle structural changes, but ensure base table exists for app start
         Base.metadata.create_all(_engine, checkfirst=True)
         
-        # Simple auto-migration for newly added columns
-        with _engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-            for col in ['first_name', 'last_name', 'roles', 'auth_method', 'session_id', 'org_name']:
-                try:
-                    conn.execute(text(f'ALTER TABLE "{db_schema}"."audit_events" ADD COLUMN "{col}" VARCHAR(512)'))
-                except Exception:
-                    pass
-
         _Session = sessionmaker(bind=_engine)
-        _AuditEvent = AuditEvent
 
         logger.info(f"AUDIT: Ready — schema='{db_schema}', table='audit_events'")
         return True
@@ -106,7 +96,7 @@ def log_event(event_type: str, user_info: dict):
         amr_raw = user_info.get("amr", [])
         amr_val = amr_raw[0] if isinstance(amr_raw, list) and amr_raw else str(amr_raw)
         
-        event = _AuditEvent(
+        event = AuditEvent(
             id=_generate_id(),
             event_type=event_type,
             user_sub=str(user_info.get("sub", "")),
@@ -137,8 +127,8 @@ def get_events(limit: int = 100) -> list:
     try:
         session = _Session()
         rows = (
-            session.query(_AuditEvent)
-            .order_by(_AuditEvent.timestamp.desc())
+            session.query(AuditEvent)
+            .order_by(AuditEvent.timestamp.desc())
             .limit(limit)
             .all()
         )

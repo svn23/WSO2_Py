@@ -7,3 +7,4 @@ gunicorn
 SQLAlchemy>=2.0.36
 psycopg2-binary>=2.9.9
 colorama>=0.4.6
+alembic>=1.13.1
